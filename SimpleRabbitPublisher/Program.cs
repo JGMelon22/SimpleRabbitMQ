@@ -1,5 +1,8 @@
 using System.Data;
 using MySql.Data.MySqlClient;
+using SimpleRabbitPublisher.Infrastructure.Message;
+using SimpleRabbitPublisher.Infrastructure.Repository;
+using SimpleRabbitPublisher.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +18,18 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IDbConnection>(x =>
     new MySqlConnection(builder.Configuration.GetConnectionString("Default"))
 );
+
+# endregion
+
+# region [Repository Registration]
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+
+# endregion
+
+# region [RabbitMQ Basic Registration]
+
+builder.Services.AddScoped<IMessagePublisher, RabbitMQPublisher>();
 
 # endregion
 
