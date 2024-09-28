@@ -11,7 +11,7 @@
     <PackageReference Include="MySql.Data" Version="8.4.0" />
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="Riok.Mapperly" Version="3.6.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.0" />
   </ItemGroup>
 
 </Project>

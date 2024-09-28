@@ -1,5 +1,4 @@
-using System.Data;
-using MySql.Data.MySqlClient;
+using SimpleRabbitPublisher.Infrastructure.Data;
 using SimpleRabbitPublisher.Infrastructure.Message;
 using SimpleRabbitPublisher.Infrastructure.Repository;
 using SimpleRabbitPublisher.Interfaces;
@@ -15,9 +14,7 @@ builder.Services.AddSwaggerGen();
 
 # region [IDBConnection Registration]
 
-builder.Services.AddScoped<IDbConnection>(x =>
-    new MySqlConnection(builder.Configuration.GetConnectionString("Default"))
-);
+builder.Services.AddSingleton<DapperDbContext>();
 
 # endregion
 

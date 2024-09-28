@@ -1,6 +1,7 @@
 using System.Data;
 using Dapper;
 using SimpleRabbitPublisher.DTOs;
+using SimpleRabbitPublisher.Infrastructure.Data;
 using SimpleRabbitPublisher.Infrastructure.Mapper;
 using SimpleRabbitPublisher.Interfaces;
 using SimpleRabbitPublisher.Models;
@@ -9,11 +10,11 @@ namespace SimpleRabbitPublisher.Infrastructure.Repository;
 
 public class OrderRepository : IOrderRepository
 {
-    private readonly IDbConnection _dbConnection;
+    private readonly DapperDbContext _context;
 
-    public OrderRepository(IDbConnection dbConnection)
+    public OrderRepository(DapperDbContext context)
     {
-        _dbConnection = dbConnection;
+        _context = context;
     }
 
     public async Task<ServiceResponse<int>> AddOrderAsync(OrderInput newOrder)
@@ -27,24 +28,21 @@ public class OrderRepository : IOrderRepository
                         VALUES(@ProductName, @Price, @Quantity, @RegisteredDate);
                         """;
 
-            _dbConnection.Open();
+            using (var connection = _context.CreateConnection())
+            {
+                var order = orderMapper.OrderInputToOrder(newOrder);
+                var orderResult = await connection.ExecuteAsync(sql, order);
 
-            var order = orderMapper.OrderInputToOrder(newOrder);
-            var orderResult = await _dbConnection.ExecuteAsync(sql, order);
+                if (orderResult == 0)
+                    throw new Exception("An error ocurred while inserting a new register");
 
-            if (orderResult == 0)
-                throw new Exception("An error ocurred while inserting a new register");
-
-            serviceResponse.Data = orderResult;
+                serviceResponse.Data = orderResult;
+            }
         }
         catch (Exception ex)
         {
             serviceResponse.Success = false;
             serviceResponse.Message = ex.Message;
-        }
-        finally
-        {
-            _dbConnection.Close();
         }
 
         return serviceResponse;
@@ -66,21 +64,18 @@ public class OrderRepository : IOrderRepository
                         FROM orders;
                         """;
 
-            _dbConnection.Open();
+            using (var connection = _context.CreateConnection())
+            {
+                var orders = await connection.QueryAsync<Order>(sql);
+                var ordersResult = orders.Select(x => orderMapper.OrderToOrderResponse(x)).ToList();
 
-            var orders = await _dbConnection.QueryAsync<Order>(sql);
-            var ordersResult = orders.Select(x => orderMapper.OrderToOrderResponse(x)).ToList();
-
-            serviceResponse.Data = ordersResult;
+                serviceResponse.Data = ordersResult;
+            }
         }
         catch (Exception ex)
         {
             serviceResponse.Success = false;
             serviceResponse.Message = ex.Message;
-        }
-        finally
-        {
-            _dbConnection.Close();
         }
 
         return serviceResponse;
@@ -103,20 +98,20 @@ public class OrderRepository : IOrderRepository
                         WHERE order_id = @Id
                         """;
 
-            var order = await _dbConnection.QueryFirstOrDefaultAsync<Order>(sql, new { Id = id });
-            var orderResult = order
-                ?? throw new Exception($"Order with id {id} not found!");
+            using (var connection = _context.CreateConnection())
+            {
+                var order = await connection.QueryFirstOrDefaultAsync<Order>(sql, new { Id = id });
+                var orderResult = order
+                    ?? throw new Exception($"Order with id {id} not found!");
 
-            serviceResponse.Data = orderMapper.OrderToOrderResponse(orderResult);
+                serviceResponse.Data = orderMapper.OrderToOrderResponse(orderResult);
+            }
+
         }
         catch (Exception ex)
         {
             serviceResponse.Success = false;
             serviceResponse.Message = ex.Message;
-        }
-        finally
-        {
-            _dbConnection.Close();
         }
 
         return serviceResponse;
@@ -134,21 +129,20 @@ public class OrderRepository : IOrderRepository
                         WHERE order_id = @Id
                         """;
 
-            _dbConnection.Open();
-            var orderResult = await _dbConnection.ExecuteAsync(sql, new { Id = id });
-            if (orderResult == 0)
-                throw new Exception($"Video Game with id {id} not found!");
+            using (var connection = _context.CreateConnection())
+            {
+                var orderResult = await connection.ExecuteAsync(sql, new { Id = id });
+                if (orderResult == 0)
+                    throw new Exception($"Video Game with id {id} not found!");
 
-            serviceResponse.Data = orderResult;
+                serviceResponse.Data = orderResult;
+            }
+
         }
         catch (Exception ex)
         {
             serviceResponse.Success = false;
             serviceResponse.Message = ex.Message;
-        }
-        finally
-        {
-            _dbConnection.Close();
         }
 
         return serviceResponse;
@@ -170,26 +164,24 @@ public class OrderRepository : IOrderRepository
                         WHERE order_id = @Id;
                         """;
 
-            _dbConnection.Open();
+            using (var connection = _context.CreateConnection())
+            {
+                var order = orderMapper.OrderInputToOrder(updatedOrder);
+                order.Id = id;
 
-            var order = orderMapper.OrderInputToOrder(updatedOrder);
-            order.Id = id;
+                var orderResult = await connection.ExecuteAsync(sql, order);
 
-            var orderResult = await _dbConnection.ExecuteAsync(sql, order);
+                if (orderResult == 0)
+                    throw new Exception($"Order with id {id} not found!");
 
-            if (orderResult == 0)
-                throw new Exception($"Order with id {id} not found!");
+                serviceResponse.Data = orderResult;
+            }
 
-            serviceResponse.Data = orderResult;
         }
         catch (Exception ex)
         {
             serviceResponse.Success = false;
             serviceResponse.Message = ex.Message;
-        }
-        finally
-        {
-            _dbConnection.Close();
         }
 
         return serviceResponse;
