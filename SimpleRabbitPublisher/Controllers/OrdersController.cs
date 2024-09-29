@@ -63,7 +63,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> UpdateOrderAsync([FromRoute] int id)
+    public async Task<IActionResult> RemoveOrderAsync([FromRoute] int id)
     {
         var order = await _orderRepository.RemoveOrderAsync(id);
 
