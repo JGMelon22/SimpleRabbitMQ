@@ -24,7 +24,7 @@ public class OrderRepository : IOrderRepository
         try
         {
             string sql = """
-                        INSERT INTO rabbitmq_orders.orders(product_name, price, quantity, registered_date)
+                        INSERT INTO orders(product_name, price, quantity, registered_date)
                         VALUES(@ProductName, @Price, @Quantity, @RegisteredDate);
                         """;
 
